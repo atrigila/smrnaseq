@@ -47,11 +47,17 @@ workflow PREPARE_GENOME {
     // even if bowtie index is specified, there still needs to be a fasta.
     // without fasta, no genome analysis.
     if(val_fasta) {
+        // Clean fasta (replace non-ATCGs with Ns, remove whitespaces from headers)
+        CLEAN_FASTA ( ch_fasta )
+        ch_versions      = ch_versions.mix(CLEAN_FASTA.out.versions)
+        ch_fasta         = CLEAN_FASTA.out.output
+
         //Prepare bowtie index, unless specified
         //This needs to be done here as the index is used by GENOME_QUANT
         if(val_bowtie_index) {
             if (val_bowtie_index.endsWith(".tar.gz")) {
-                UNTAR_BOWTIE_INDEX ( ch_bowtie_index )
+                UNTAR_BOWTIE_INDEX ( ch_bowtie_index ) // TODO: For mirdeep2, if the user supplies the index it should be a tar.gz of the directory containing the *ebwt files. TODO: Tar.gz index files provided via params need to point to the directory containing the *ebwt and not to the *ebwt themselves.
+                UNTAR_BOWTIE_INDEX.out.files.dump(tag:"UNTAR_BOWTIE_INDEX.out.files")
                 ch_bowtie_index = UNTAR_BOWTIE_INDEX.out.files.map { it[1] }
                 ch_versions  = ch_versions.mix(UNTAR_BOWTIE_INDEX.out.versions)
             } else {
@@ -60,16 +66,11 @@ workflow PREPARE_GENOME {
                     .filter { it != null }
             }
         } else {
-            // Clean fasta (replace non-ATCGs with Ns, remove whitespaces from headers)
-            CLEAN_FASTA ( ch_fasta )
-            ch_versions      = ch_versions.mix(CLEAN_FASTA.out.versions)
-
             // Index FASTA with nf-core Bowtie1
             INDEX_GENOME ( CLEAN_FASTA.out.output )
             ch_versions      = ch_versions.mix(INDEX_GENOME.out.versions)
 
             // Set channels: clean fasta and its index
-            ch_fasta         = CLEAN_FASTA.out.output
             ch_bowtie_index  = INDEX_GENOME.out.index.map{ meta, it -> [ it ] }.collect()
         }
     }
