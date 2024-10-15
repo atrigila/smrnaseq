@@ -31,6 +31,7 @@ workflow MIRNA_QUANT {
     ch_mirna_gtf         // channel: [ val(meta), path(gtf) ]
     ch_reads_for_mirna   // channel: [ val(meta), [ reads ] ]
     ch_mirtrace_species  // channel: [ val(string) ]
+    ch_mirgenedb_species // channel: [ val(string) ]
 
     main:
     ch_versions = Channel.empty()
@@ -96,10 +97,19 @@ workflow MIRNA_QUANT {
 
     // nf-core/mirtop
 
+    ch_species_mirtop = ch_mirtrace_species
+
+    if(params.mirgenedb_species){
+        ch_species_mirtop = ch_mirgenedb_species
+    }
+
     ch_mirna_gtf_species = ch_mirna_gtf.map{ meta,gtf -> gtf }
-            .combine(ch_mirtrace_species)
+            .combine(ch_species_mirtop)
             .map{ gtf, species -> [ [id:species.toString()], gtf, species ] }
             .collect()
+
+    ch_mirna_gtf_species.dump(tag:"ch_mirna_gtf_species")
+    ch_mirna_gtf_species.view()
 
     BAM_STATS_MIRNA_MIRTOP(BOWTIE_MAP_SEQCLUSTER.out.bam, FORMAT_HAIRPIN.out.formatted_fasta, ch_mirna_gtf_species )
 

@@ -40,6 +40,7 @@ workflow PREPARE_GENOME {
     val_fasta                      // file: /path/to/genome.fasta
     val_bowtie_index               // file or directory: /path/to/bowtie/ or /path/to/bowtie.tar.gz
     val_mirtrace_species           // string: Species for miRTrace
+    val_mirgenedb_species          // string: MirgeneDB Species
     val_rrna                       // string: Path to the rRNA fasta file to be used as contamination database.
     val_trna                       // string: Path to the tRNA fasta file to be used as contamination database.
     val_cdna                       // string: Path to the cDNA fasta file to be used as contamination database.
@@ -60,6 +61,7 @@ workflow PREPARE_GENOME {
     bool_has_fasta            = val_fasta                     ? true : false
 
     ch_mirtrace_species       = val_mirtrace_species          ? Channel.value(val_mirtrace_species) : Channel.empty()
+    ch_mirgenedb_species      = val_mirgenedb_species         ? Channel.value(val_mirgenedb_species) : Channel.empty()
     mirna_gtf_from_species    = val_mirtrace_species          ? (val_mirtrace_species == 'hsa' ? "https://raw.githubusercontent.com/nf-core/test-datasets/smrnaseq/reference/hsa.gff3" : "https://mirbase.org/download/CURRENT/genomes/${val_mirtrace_species}.gff3") : false
     ch_mirna_gtf              = val_mirna_gtf                 ? Channel.fromPath(val_mirna_gtf, checkIfExists: true).map{ it -> [ [id:it.baseName], it ] }.collect() : ( mirna_gtf_from_species ? Channel.fromPath(mirna_gtf_from_species, checkIfExists: true).map{ it -> [ [id:it.baseName], it ] }.collect() :  Channel.empty() )
     ch_mirna_adapters         = params.with_umi               ? [] : Channel.fromPath(val_fastp_known_mirna_adapters, checkIfExists: true).collect()
@@ -135,6 +137,7 @@ workflow PREPARE_GENOME {
     bowtie_index          = ch_bowtie_index        // channel: [ val(meta), path(directory_index) ]
     versions              = ch_versions            // channel: [ versions.yml ]
     mirtrace_species      = ch_mirtrace_species    // channel: [ val(string) ]
+    mirgenedb_species     = ch_mirgenedb_species   // channel: [ val(string) ]
     has_mirtrace_species  = bool_mirtrace_species  // boolean
     reference_mature      = ch_reference_mature    // channel: [ val(meta), path(fasta) ]
     reference_hairpin     = ch_reference_hairpin   // channel: [ val(meta), path(fasta) ]

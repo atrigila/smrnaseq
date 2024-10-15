@@ -49,6 +49,7 @@ workflow NFCORE_SMRNASEQ {
     has_mirtrace_species   // boolean
     ch_mirna_adapters      // channel: [ val(string) ]
     ch_mirtrace_species    // channel: [ val(string) ]
+    ch_mirgenedb_species   // channel: [ val(string) ]
     ch_reference_mature    // channel: [ val(meta), path(fasta) ]
     ch_reference_hairpin   // channel: [ val(meta), path(fasta) ]
     ch_mirna_gtf           // channel: [ val(meta), path(gtf) ]
@@ -201,7 +202,8 @@ workflow NFCORE_SMRNASEQ {
         ch_reference_hairpin,
         ch_mirna_gtf,
         ch_reads_for_mirna,
-        ch_mirtrace_species
+        ch_mirtrace_species,
+        ch_mirgenedb_species
     )
     ch_versions = ch_versions.mix(MIRNA_QUANT.out.versions)
 
