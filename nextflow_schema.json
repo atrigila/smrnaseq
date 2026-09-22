@@ -58,6 +58,16 @@
                     "fa_icon": "fas fa-barcode",
                     "description": "Enable UMI-based read deduplication."
                 },
+                "with_fgumi": {
+                    "type": "boolean",
+                    "fa_icon": "fas fa-rocket",
+                    "description": "Experimental. Use fgumi instead of UMICollapse and UMI-tools for UMI handling. Requires --with_umi and --fgumi_read_structures."
+                },
+                "fgumi_read_structures": {
+                    "type": "string",
+                    "fa_icon": "fas fa-barcode",
+                    "description": "Read structures to pass to fgumi extract when using --with_fgumi, for example '+T +M'. Existing UMI-tools barcode patterns are not translated to fgumi read structures."
+                },
                 "umitools_extract_method": {
                     "type": "string",
                     "default": "string",
@@ -88,11 +98,6 @@
                     "type": "integer",
                     "fa_icon": "fas fa-barcode",
                     "description": "After UMI barcode extraction discard either R1 or R2 by setting this parameter to 1 or 2, respectively."
-                },
-                "save_umi_intermeds": {
-                    "type": "boolean",
-                    "fa_icon": "fas fa-save",
-                    "description": "If this option is specified, intermediate FastQ and BAM files produced by UMI-tools are also saved in the results directory."
                 }
             },
             "fa_icon": "fas fa-barcode"

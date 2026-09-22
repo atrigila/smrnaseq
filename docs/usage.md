@@ -94,6 +94,8 @@ The pipeline handles UMIs with two tools. Umicollapse to deduplicate on entire r
 >
 > In these cases where UMI trimming relies on the adapter sequence for the location of the UMIs, you can disable fastp trimming for the run (e.g. `--skip_fastp`).
 
+Experimental fgumi UMI handling can be enabled with `--with_umi --with_fgumi`. This replaces the default UMICollapse and UMI-tools deduplication segment with fgumi extraction, sorting, deduplication metrics, and FASTQ conversion. You must provide fgumi read structures explicitly, for example `--fgumi_read_structures '+T +M'`. Existing `umitools_bc_pattern` values are not translated to fgumi read structures. fgumi is currently experimental, so validate results on pilot data before using this mode for production analyses.
+
 ## Samplesheet input
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 2 columns ("sample" and "fastq_1"), and a header row as shown in the examples below.

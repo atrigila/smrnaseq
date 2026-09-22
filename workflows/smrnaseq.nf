@@ -19,6 +19,7 @@ include { paramsSummaryMultiqc             } from '../subworkflows/nf-core/utils
 include { softwareVersionsToYAML           } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 // local subworkflows
 include { CONTAMINANT_FILTER               } from '../subworkflows/local/contaminant_filter/main'
+include { FGUMI_UMI_DEDUP                  } from '../subworkflows/local/fgumi_umi_dedup/main'
 include { GENOME_QUANT                     } from '../subworkflows/local/genome_quant/main'
 include { MIRNA_QUANT                      } from '../subworkflows/local/mirna_quant/main'
 include { methodsDescriptionText           } from '../subworkflows/local/utils_nfcore_smrnaseq_pipeline'
@@ -57,6 +58,9 @@ workflow NFCORE_SMRNASEQ {
 
     def ch_versions = channel.empty()
     def ch_multiqc_files = channel.empty()
+    fgumi_metrics = channel.empty()
+    fgumi_histogram = channel.empty()
+
     //
     // Create separate channels for samples that have single/multiple FastQ files to merge
     //
@@ -118,18 +122,33 @@ workflow NFCORE_SMRNASEQ {
     // consisting of sequence + common sequence "miRNA adapter" + UMI
     // once collapsing happened, we will use umitools extract to get rid of the common miRNA sequence + the UMI to have only plain collapsed reads without any other clutter
     if (params.with_umi) {
-        ch_fastq = channel.value('fastq')
-        ch_input_for_collapse = ch_reads_for_mirna.map{ meta, reads -> [meta, reads, []]} //Needs to be done to add a []
-        UMICOLLAPSE_FASTQ(ch_input_for_collapse, ch_fastq)
-        UMITOOLS_EXTRACT(UMICOLLAPSE_FASTQ.out.fastq)
+        if (params.with_fgumi) {
+            FGUMI_UMI_DEDUP(ch_reads_for_mirna)
+            ch_versions = ch_versions.mix(FGUMI_UMI_DEDUP.out.versions)
+            fgumi_metrics = FGUMI_UMI_DEDUP.out.metrics
+            fgumi_histogram = FGUMI_UMI_DEDUP.out.histogram
 
-        // Filter out sequences smaller than params.fastp_min_length
-        FASTP_LENGTH_FILTER (
-            UMITOOLS_EXTRACT.out.reads.map {meta, reads -> [meta, reads, []] },
-            false,
-            params.save_trimmed_fail,
-            params.save_merged
-        )
+            // Filter out sequences smaller than params.fastp_min_length
+            FASTP_LENGTH_FILTER (
+                FGUMI_UMI_DEDUP.out.reads.map {meta, reads -> [meta, reads, []] },
+                false,
+                params.save_trimmed_fail,
+                params.save_merged
+            )
+        } else {
+            ch_fastq = channel.value('fastq')
+            ch_input_for_collapse = ch_reads_for_mirna.map{ meta, reads -> [meta, reads, []]} //Needs to be done to add a []
+            UMICOLLAPSE_FASTQ(ch_input_for_collapse, ch_fastq)
+            UMITOOLS_EXTRACT(UMICOLLAPSE_FASTQ.out.fastq)
+
+            // Filter out sequences smaller than params.fastp_min_length
+            FASTP_LENGTH_FILTER (
+                UMITOOLS_EXTRACT.out.reads.map {meta, reads -> [meta, reads, []] },
+                false,
+                params.save_trimmed_fail,
+                params.save_merged
+            )
+        }
 
         ch_reads_for_mirna = FASTP_LENGTH_FILTER.out.reads
     }
@@ -283,7 +302,12 @@ workflow NFCORE_SMRNASEQ {
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_FASTQC_UMITOOLS_FASTP.out.fastqc_trim_zip.collect { item -> item[1] }.ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(FASTQ_FASTQC_UMITOOLS_FASTP.out.trim_json.collect { item -> item[1] }.ifEmpty([]))
         if(params.with_umi) {
-            ch_multiqc_files = ch_multiqc_files.mix(UMICOLLAPSE_FASTQ.out.log.collect { item -> item[1] }.ifEmpty([]))
+            if (params.with_fgumi) {
+                ch_multiqc_files = ch_multiqc_files.mix(fgumi_metrics.collect { item -> item[1] }.ifEmpty([]))
+                ch_multiqc_files = ch_multiqc_files.mix(fgumi_histogram.collect { item -> item[1] }.ifEmpty([]))
+            } else {
+                ch_multiqc_files = ch_multiqc_files.mix(UMICOLLAPSE_FASTQ.out.log.collect { item -> item[1] }.ifEmpty([]))
+            }
         }
         ch_multiqc_files = ch_multiqc_files.mix(contamination_stats.collect().ifEmpty([]))
         ch_multiqc_files = ch_multiqc_files.mix(genome_stats.collect { item -> item[1] }.ifEmpty([]))

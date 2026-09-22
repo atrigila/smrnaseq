@@ -202,6 +202,16 @@ workflow PIPELINE_COMPLETION {
 def validateInputParameters() {
     genomeExistsError()
 
+    if (params.with_fgumi) {
+        if (!params.with_umi) {
+            exit 1, "The experimental --with_fgumi option requires --with_umi."
+        }
+        if (!params.fgumi_read_structures) {
+            exit 1, "The experimental --with_fgumi option requires --fgumi_read_structures."
+        }
+        log.warn "The parameter --with_fgumi enables experimental fgumi UMI handling. fgumi is a research preview; validate results on pilot data before production use."
+    }
+
     if (!params.mirgenedb) {
         // Validate mature miRNA fasta file
         if (!params.mature) {

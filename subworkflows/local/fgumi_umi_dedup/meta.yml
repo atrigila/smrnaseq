@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: "fgumi_umi_dedup"
+description: Experimental UMI handling with fgumi.
+keywords:
+  - umi
+  - deduplication
+  - fgumi
+components:
+  - fgumi/extract
+  - fgumi/sort
+  - fgumi/dedup
+  - fgumi/fastq
+input:
+  - reads:
+      type: file
+      description: |
+        Input channel containing UMI-containing reads.
+        Structure: [ val(meta), path(reads) ]
+      pattern: "*.{fastq,fastq.gz,fq,fq.gz}"
+output:
+  - reads:
+      type: file
+      description: |
+        Channel containing fgumi FASTQ reads for downstream analysis.
+        Structure: [ val(meta), path(reads) ]
+      pattern: "*.fastq.gz"
+  - metrics:
+      type: file
+      description: |
+        fgumi duplication metrics.
+        Structure: [ val(meta), path(metrics) ]
+      pattern: "*.metrics.txt"
+  - histogram:
+      type: file
+      description: |
+        fgumi UMI family size histogram.
+        Structure: [ val(meta), path(histogram) ]
+      pattern: "*.family_size_histogram.txt"
+  - versions:
+      type: file
+      description: |
+        File containing software versions.
+        Structure: [ path(versions.yml) ]
+      pattern: "versions.yml"
+authors:
+  - "@atrigila"
+maintainers:
+  - "@atrigila"

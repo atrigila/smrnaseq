@@ -47,7 +47,8 @@ You can find numerous talks on the nf-core events page from various topics inclu
 2. UMI deduplication (Optional)
    1. Deduplication on fastq-level ([`UMICollapse`](https://github.com/Daniel-Liu-c0deb0t/UMICollapse))
    2. Barcode and miRNA adapter extraction ([`UMI-tools`](https://github.com/CGATOxford/UMI-tools))
-   3. Read length filter ([`fastp`](https://github.com/OpenGene/fastp))
+   3. Experimental UMI extraction and handling ([`fgumi`](https://github.com/fulcrumgenomics/fgumi)) with `--with_umi --with_fgumi`
+   4. Read length filter ([`fastp`](https://github.com/OpenGene/fastp))
 3. miRNA QC ([`miRTrace`](https://github.com/friedlanderlab/mirtrace))
 4. Contamination filtering ([`Bowtie2`](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)) (Optional)
    1. rRNA filtration
